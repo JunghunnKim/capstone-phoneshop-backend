@@ -1,5 +1,6 @@
 package com.shop.phoneshop.service;
 
+import com.shop.phoneshop.dto.FavoriteDeleteRequest;
 import com.shop.phoneshop.dto.FavoritePhoneResponse;
 import com.shop.phoneshop.dto.FavoriteRequest;
 import com.shop.phoneshop.model.Favorite;
@@ -60,5 +61,15 @@ public class FavoriteService {
                             .build();
                 })
                 .toList();
+    }
+
+    /// 관심 기종 삭제
+    public void removeFavorite(FavoriteDeleteRequest request) {
+
+        Favorite favorite = favoriteRepository
+                .findByUserIdAndPhoneId(request.getUserId(), request.getPhoneId())
+                .orElseThrow(() -> new IllegalArgumentException("관심 기종이 존재하지 않습니다."));
+
+        favoriteRepository.delete(favorite);
     }
 }

@@ -1,5 +1,6 @@
 package com.shop.phoneshop.controller;
 
+import com.shop.phoneshop.dto.FavoriteDeleteRequest;
 import com.shop.phoneshop.dto.FavoritePhoneResponse;
 import com.shop.phoneshop.dto.FavoriteRequest;
 import com.shop.phoneshop.service.FavoriteService;
@@ -25,6 +26,12 @@ public class FavoriteController {
     @GetMapping("/users/{userId}")
     public List<FavoritePhoneResponse> getUserFavorites(@PathVariable Long userId) {
         return favoriteService.getFavoritesByUser(userId);
+    }
+
+    /// 관심 기종 삭제
+    @DeleteMapping
+    public void removeFavorite(@RequestBody FavoriteDeleteRequest request) {
+        favoriteService.removeFavorite(request);
     }
 
 }
