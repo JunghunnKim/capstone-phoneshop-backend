@@ -1,5 +1,6 @@
 package com.shop.phoneshop.service;
 
+import com.shop.phoneshop.dto.FavoritePhoneResponse;
 import com.shop.phoneshop.dto.FavoriteRequest;
 import com.shop.phoneshop.model.Favorite;
 import com.shop.phoneshop.model.Phone;
@@ -10,6 +11,8 @@ import com.shop.phoneshop.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class FavoriteService {
@@ -18,6 +21,7 @@ public class FavoriteService {
     private final UserRepository userRepository;
     private final PhoneRepository phoneRepository;
 
+    /// 관심 기종 등록
     public void addFavorite(FavoriteRequest request) {
 
         User user = userRepository.findById(request.getUserId())
@@ -37,5 +41,24 @@ public class FavoriteService {
                 .build();
 
         favoriteRepository.save(favorite);
+    }
+
+    /// 관심 기종 조회
+    public List<FavoritePhoneResponse> getFavoritesByUser(Long userId) {
+
+        return favoriteRepository.findAllByUserId(userId)
+                .stream()
+                .map(favorite -> {
+                    Phone phone = favorite.getPhone();
+
+                    return FavoritePhoneResponse.builder()
+                            .phoneId(phone.getId())
+                            .name(phone.getName())
+                            .brand(phone.getBrand())
+                            .price(phone.getPrice())
+                            .imageUrl(phone.getImageUrl())
+                            .build();
+                })
+                .toList();
     }
 }
