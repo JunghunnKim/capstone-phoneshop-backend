@@ -34,7 +34,7 @@ public class CommentController {
             @PathVariable Long commentId,
             @RequestBody CommentUpdateRequest request
     ) {
-        // 🔐 임시 사용자 ID (나중에 JWT로 대체)
+        // 임시 사용자 ID
         Long userId = 1L;
 
         commentService.updateComment(commentId, userId, request);
@@ -44,7 +44,7 @@ public class CommentController {
     @DeleteMapping("/{commentId}")
     public void deleteComment(@PathVariable Long commentId) {
 
-        // 🔐 임시 사용자 ID (나중에 JWT에서 추출)
+        // 임시 사용자 ID
         Long userId = 1L;
 
         commentService.deleteComment(commentId, userId);
