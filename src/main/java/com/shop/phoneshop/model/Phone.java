@@ -4,26 +4,24 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+@Entity
 @Getter
 @NoArgsConstructor
-@Entity
 public class Phone {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String modelName;     // 모델명
-    private String brand;         // 브랜드 (삼성, 애플 등)
-    private int price;            // 가격
-    private int stock;            // 재고 수량
-    private String imageUrl;      // 이미지 경로
+    private String name;
+    private String brand;
+    private int price;
+    private String imageUrl;
 
-    public Phone(String modelName, String brand, int price, int stock, String imageUrl) {
-        this.modelName = modelName;
+    public Phone(String name, String brand, int price, String imageUrl) {
+        this.name = name;
         this.brand = brand;
         this.price = price;
-        this.stock = stock;
         this.imageUrl = imageUrl;
     }
 }

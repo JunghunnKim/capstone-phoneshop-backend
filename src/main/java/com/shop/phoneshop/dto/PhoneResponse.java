@@ -1,13 +1,15 @@
 package com.shop.phoneshop.dto;
 
+import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor
-public class PhoneCreateRequest {
+@Builder
+public class PhoneResponse {
 
+    private Long id;
     private String name;
     private String brand;
     private int price;
+    private String imageUrl;
 }
