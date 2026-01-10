@@ -1,6 +1,7 @@
 package com.shop.phoneshop.service;
 
 import com.shop.phoneshop.dto.PhoneCreateRequest;
+import com.shop.phoneshop.dto.PhoneDetailResponse;
 import com.shop.phoneshop.dto.PhoneResponse;
 import com.shop.phoneshop.model.Phone;
 import com.shop.phoneshop.repository.PhoneRepository;
@@ -11,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -47,7 +49,7 @@ public class PhoneService {
         phoneRepository.save(phone);
     }
 
-    /// 핸드폰 조회
+    /// 전체 핸드폰 조회
     public List<PhoneResponse> getAllPhones() {
         return phoneRepository.findAll()
                 .stream()
@@ -59,5 +61,19 @@ public class PhoneService {
                         .imageUrl(phone.getImageUrl())
                         .build())
                 .toList();
+    }
+
+    /// 특정 핸드폰 조회
+    public PhoneDetailResponse getPhoneById(Long id) {
+        Phone phone = phoneRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("해당 핸드폰이 존재하지 않습니다."));
+
+        return PhoneDetailResponse.builder()
+                .id(phone.getId())
+                .name(phone.getName())
+                .brand(phone.getBrand())
+                .price(phone.getPrice())
+                .imageUrl(phone.getImageUrl())
+                .build();
     }
 }

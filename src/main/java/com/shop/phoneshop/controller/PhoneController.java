@@ -2,6 +2,7 @@ package com.shop.phoneshop.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shop.phoneshop.dto.PhoneCreateRequest;
+import com.shop.phoneshop.dto.PhoneDetailResponse;
 import com.shop.phoneshop.dto.PhoneResponse;
 import com.shop.phoneshop.service.PhoneService;
 import lombok.RequiredArgsConstructor;
@@ -38,5 +39,11 @@ public class PhoneController {
     @GetMapping
     public List<PhoneResponse> getAllPhones() {
         return phoneService.getAllPhones();
+    }
+
+    /// 특정 핸드폰 조회
+    @GetMapping("/{id}")
+    public PhoneDetailResponse getPhone(@PathVariable Long id) {
+        return phoneService.getPhoneById(id);
     }
 }
