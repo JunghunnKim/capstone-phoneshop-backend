@@ -26,4 +26,9 @@ public class Favorite {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "phone_id", nullable = false)
     private Phone phone;
+
+    public Favorite(User user, Phone phone) {
+        this.user = user;
+        this.phone = phone;
+    }
 }

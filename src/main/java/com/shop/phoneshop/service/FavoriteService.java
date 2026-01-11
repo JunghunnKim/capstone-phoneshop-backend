@@ -1,8 +1,6 @@
 package com.shop.phoneshop.service;
 
-import com.shop.phoneshop.dto.FavoriteDeleteRequest;
 import com.shop.phoneshop.dto.FavoritePhoneResponse;
-import com.shop.phoneshop.dto.FavoriteRequest;
 import com.shop.phoneshop.model.Favorite;
 import com.shop.phoneshop.model.Phone;
 import com.shop.phoneshop.model.User;
@@ -11,11 +9,13 @@ import com.shop.phoneshop.repository.PhoneRepository;
 import com.shop.phoneshop.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class FavoriteService {
 
     private final FavoriteRepository favoriteRepository;
@@ -23,52 +23,48 @@ public class FavoriteService {
     private final PhoneRepository phoneRepository;
 
     /// 관심 기종 등록
-    public void addFavorite(FavoriteRequest request) {
+    public void addFavorite(Long userId, Long phoneId) {
 
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("유저가 존재하지 않습니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저 없음"));
 
-        Phone phone = phoneRepository.findById(request.getPhoneId())
-                .orElseThrow(() -> new IllegalArgumentException("핸드폰이 존재하지 않습니다."));
+        Phone phone = phoneRepository.findById(phoneId)
+                .orElseThrow(() -> new IllegalArgumentException("폰 없음"));
 
-        // 중복 찜 방지
-        if (favoriteRepository.findByUserIdAndPhoneId(user.getId(), phone.getId()).isPresent()) {
-            throw new IllegalStateException("이미 관심 기종으로 등록되어 있습니다.");
+        boolean exists =
+                favoriteRepository.existsByUserAndPhone(user, phone);
+
+        if (exists) {
+            throw new IllegalStateException("이미 관심 등록됨");
         }
 
-        Favorite favorite = Favorite.builder()
-                .user(user)
-                .phone(phone)
-                .build();
-
-        favoriteRepository.save(favorite);
+        favoriteRepository.save(new Favorite(user, phone));
     }
 
     /// 관심 기종 조회
-    public List<FavoritePhoneResponse> getFavoritesByUser(Long userId) {
+    @Transactional(readOnly = true)
+    public List<FavoritePhoneResponse> getMyFavorites(Long userId) {
 
-        return favoriteRepository.findAllByUserId(userId)
-                .stream()
-                .map(favorite -> {
-                    Phone phone = favorite.getPhone();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저 없음"));
 
-                    return FavoritePhoneResponse.builder()
-                            .phoneId(phone.getId())
-                            .name(phone.getName())
-                            .brand(phone.getBrand())
-                            .price(phone.getPrice())
-                            .imageUrl(phone.getImageUrl())
-                            .build();
-                })
+        return favoriteRepository.findByUser(user).stream()
+                .map(FavoritePhoneResponse::from)
                 .toList();
     }
 
     /// 관심 기종 삭제
-    public void removeFavorite(FavoriteDeleteRequest request) {
+    public void deleteFavorite(Long userId, Long phoneId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저 없음"));
+
+        Phone phone = phoneRepository.findById(phoneId)
+                .orElseThrow(() -> new IllegalArgumentException("폰 없음"));
 
         Favorite favorite = favoriteRepository
-                .findByUserIdAndPhoneId(request.getUserId(), request.getPhoneId())
-                .orElseThrow(() -> new IllegalArgumentException("관심 기종이 존재하지 않습니다."));
+                .findByUserAndPhone(user, phone)
+                .orElseThrow(() -> new IllegalArgumentException("관심 등록 안됨"));
 
         favoriteRepository.delete(favorite);
     }
