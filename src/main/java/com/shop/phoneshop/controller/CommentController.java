@@ -28,7 +28,7 @@ public class CommentController {
         commentService.addComment(userId, request);
     }
 
-    /// 댓글 조회 (JWT 필요 없음)
+    /// 댓글 조회
     @GetMapping("/phones/{phoneId}")
     public List<CommentResponse> getCommentsByPhone(@PathVariable Long phoneId) {
         return commentService.getCommentsByPhone(phoneId);

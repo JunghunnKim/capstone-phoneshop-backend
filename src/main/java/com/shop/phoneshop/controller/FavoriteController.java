@@ -45,7 +45,6 @@ public class FavoriteController {
         favoriteService.deleteFavorite(userId, phoneId);
     }
 
-    /// 🔐 JWT → userId
     private Long extractUserId(String authorization) {
         String token = authorization.replace("Bearer ", "");
         return jwtTokenProvider.getUserId(token);
