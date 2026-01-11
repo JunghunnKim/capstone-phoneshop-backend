@@ -24,13 +24,17 @@ public class CommentService {
     private final PhoneRepository phoneRepository;
 
     /// 댓글 추가
-    public void addComment(CommentCreateRequest request) {
+    public void addComment(Long userId, CommentCreateRequest request) {
 
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("유저가 존재하지 않습니다."));
+        if (request.getPhoneId() == null) {
+            throw new IllegalArgumentException("phoneId는 필수입니다.");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저 없음"));
 
         Phone phone = phoneRepository.findById(request.getPhoneId())
-                .orElseThrow(() -> new IllegalArgumentException("핸드폰이 존재하지 않습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("폰 없음"));
 
         Comment comment = Comment.builder()
                 .user(user)
@@ -40,6 +44,7 @@ public class CommentService {
 
         commentRepository.save(comment);
     }
+
 
     /// 댓글 조회
     public List<CommentResponse> getCommentsByPhone(Long phoneId) {
