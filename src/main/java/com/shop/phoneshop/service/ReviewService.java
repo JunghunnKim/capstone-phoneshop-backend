@@ -1,6 +1,7 @@
 package com.shop.phoneshop.service;
 
 import com.shop.phoneshop.dto.PhoneRatingResponse;
+import com.shop.phoneshop.dto.PhoneReviewResponse;
 import com.shop.phoneshop.dto.ReviewCreateRequest;
 import com.shop.phoneshop.model.Phone;
 import com.shop.phoneshop.model.Review;
@@ -11,6 +12,8 @@ import com.shop.phoneshop.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -62,4 +65,17 @@ public class ReviewService {
                 .averageRating(avg == null ? 0.0 : Math.round(avg * 10) / 10.0)
                 .build();
     }
+
+    /// 핸드폰 리뷰 목록 조회
+    @Transactional(readOnly = true)
+    public List<PhoneReviewResponse> getReviewsByPhone(Long phoneId) {
+
+        Phone phone = phoneRepository.findById(phoneId)
+                .orElseThrow(() -> new IllegalArgumentException("폰 없음"));
+
+        return reviewRepository.findByPhoneOrderByCreatedAtDesc(phone).stream()
+                .map(PhoneReviewResponse::from)
+                .toList();
+    }
+
 }

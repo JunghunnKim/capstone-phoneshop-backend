@@ -3,10 +3,15 @@ package com.shop.phoneshop.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 @Table(
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"user_id", "phone_id"})
@@ -18,22 +23,22 @@ public class Review {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /// 작성자
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    /// 대상 핸드폰
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "phone_id", nullable = false)
     private Phone phone;
 
-    /// 평점 (1~5)
     private int rating;
 
-    /// 리뷰 내용
     @Column(length = 500)
     private String content;
+
+    @CreatedDate
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 
     public Review(User user, Phone phone, int rating, String content) {
         this.user = user;
