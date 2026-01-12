@@ -3,6 +3,7 @@ package com.shop.phoneshop.service;
 import com.shop.phoneshop.dto.*;
 import com.shop.phoneshop.model.User;
 import com.shop.phoneshop.repository.UserRepository;
+import com.shop.phoneshop.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -12,8 +13,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    /** 회원가입 */
+    /// 회원가입
     public void signup(SignupRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
@@ -28,19 +30,20 @@ public class UserService {
         userRepository.save(user);
     }
 
-    /** 로그인 */
-    public String login(LoginRequest request) {
+    /// 로그인
+    public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("이메일 없음"));
 
         if (!user.getPassword().equals(request.getPassword())) {
-            throw new IllegalArgumentException("비밀번호 틀림");
+            throw new IllegalArgumentException("비밀번호 불일치");
         }
 
-        return "로그인 성공";
+        String token = jwtTokenProvider.createToken(user.getId());
+        return new LoginResponse(token);
     }
 
-    /** 비밀번호 찾기(임시비밀번호 반환) */
+    /// 비밀번호 찾기(임시비밀번호 반환)
     public String resetPassword(PasswordResetRequest request) {
 
         User user = userRepository

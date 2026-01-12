@@ -12,7 +12,7 @@ src/main/java/com/shop/phoneshop
  ├── controller   # API 컨트롤러
  ├── service      # 비즈니스 로직
  ├── repository   # JPA Repository
- ├── model       # Entity
+ ├── model        # Entity
  └── dto          # Request / Response DTO
 ```
 
