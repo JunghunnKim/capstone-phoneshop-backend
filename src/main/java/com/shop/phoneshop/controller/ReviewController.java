@@ -46,4 +46,18 @@ public class ReviewController {
         return reviewService.getReviewsByPhone(phoneId);
     }
 
+    /// 리뷰 삭제
+    @DeleteMapping("/{reviewId}")
+    public void deleteReview(
+            @PathVariable Long reviewId,
+            @RequestHeader("Authorization") String authorization
+    ) {
+        Long userId = extractUserId(authorization);
+        reviewService.deleteReview(reviewId, userId);
+    }
+
+    private Long extractUserId(String authorization) {
+        String token = authorization.replace("Bearer ", "");
+        return jwtTokenProvider.getUserId(token);
+    }
 }

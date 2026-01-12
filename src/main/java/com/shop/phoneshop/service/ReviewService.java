@@ -78,4 +78,18 @@ public class ReviewService {
                 .toList();
     }
 
+    /** 리뷰 삭제 */
+    @Transactional
+    public void deleteReview(Long reviewId, Long userId) {
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("리뷰 없음"));
+
+        // 작성자 검증
+        if (!review.getUser().getId().equals(userId)) {
+            throw new IllegalStateException("리뷰 삭제 권한 없음");
+        }
+
+        reviewRepository.delete(review);
+    }
 }
