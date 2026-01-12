@@ -1,5 +1,6 @@
 package com.shop.phoneshop.controller;
 
+import com.shop.phoneshop.dto.PhoneRatingResponse;
 import com.shop.phoneshop.dto.ReviewCreateRequest;
 import com.shop.phoneshop.security.JwtTokenProvider;
 import com.shop.phoneshop.service.ReviewService;
@@ -25,4 +26,13 @@ public class ReviewController {
 
         reviewService.addReview(userId, request);
     }
+
+    /// 평균 평점 조회
+    @GetMapping("/phones/{phoneId}/average")
+    public PhoneRatingResponse getAverageRating(
+            @PathVariable Long phoneId
+    ) {
+        return reviewService.getAverageRating(phoneId);
+    }
+
 }

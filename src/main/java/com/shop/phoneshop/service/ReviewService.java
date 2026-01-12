@@ -1,5 +1,6 @@
 package com.shop.phoneshop.service;
 
+import com.shop.phoneshop.dto.PhoneRatingResponse;
 import com.shop.phoneshop.dto.ReviewCreateRequest;
 import com.shop.phoneshop.model.Phone;
 import com.shop.phoneshop.model.Review;
@@ -48,5 +49,17 @@ public class ReviewService {
         );
 
         reviewRepository.save(review);
+    }
+
+    /// 평균 평점 조회
+    @Transactional(readOnly = true)
+    public PhoneRatingResponse getAverageRating(Long phoneId) {
+
+        Double avg = reviewRepository.findAverageRatingByPhoneId(phoneId);
+
+        return PhoneRatingResponse.builder()
+                .phoneId(phoneId)
+                .averageRating(avg == null ? 0.0 : Math.round(avg * 10) / 10.0)
+                .build();
     }
 }
