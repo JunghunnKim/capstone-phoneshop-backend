@@ -31,7 +31,7 @@ public class Review {
     @JoinColumn(name = "phone_id", nullable = false)
     private Phone phone;
 
-    private int rating;
+    private double rating;
 
     @Column(length = 500)
     private String content;
@@ -40,7 +40,7 @@ public class Review {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
-    public Review(User user, Phone phone, int rating, String content) {
+    public Review(User user, Phone phone, double rating, String content) {
         this.user = user;
         this.phone = phone;
         this.rating = rating;

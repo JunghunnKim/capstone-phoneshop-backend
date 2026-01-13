@@ -6,6 +6,6 @@ import lombok.Getter;
 public class ReviewCreateRequest {
 
     private Long phoneId;
-    private int rating;
+    private double rating;
     private String content;
 }
