@@ -30,7 +30,7 @@ public class CartController {
         cartService.addItem(userId, request);
     }
 
-    /// 장바구니 수량 감소 (1개씩)
+    /// 장바구니 수량 감소 (-1)
     @PostMapping("/items/decrease")
     public void decreaseItem(
             @RequestHeader("Authorization") String authorization,
@@ -49,7 +49,7 @@ public class CartController {
         return cartService.getMyCart(userId);
     }
 
-
+    /// 장바구니 품목 전체 삭제
     @DeleteMapping
     public void clearCart(
             @RequestHeader("Authorization") String authorization

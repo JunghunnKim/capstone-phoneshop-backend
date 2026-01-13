@@ -78,7 +78,7 @@ public class ReviewService {
                 .toList();
     }
 
-    /** 리뷰 삭제 */
+    /// 리뷰 삭제
     @Transactional
     public void deleteReview(Long reviewId, Long userId) {
 
