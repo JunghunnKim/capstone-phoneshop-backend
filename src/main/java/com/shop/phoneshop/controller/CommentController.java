@@ -29,7 +29,7 @@ public class CommentController {
     }
 
     /// 댓글 조회
-    @GetMapping("/phones/{phoneId}")
+    @GetMapping("/comments/{phoneId}")
     public List<CommentResponse> getCommentsByPhone(@PathVariable Long phoneId) {
         return commentService.getCommentsByPhone(phoneId);
     }
