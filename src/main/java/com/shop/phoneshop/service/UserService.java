@@ -64,9 +64,9 @@ public class UserService {
     }
 
     /// 회원정보 수정
-    public String updateUser(UpdateUserRequest request) {
+    public String updateUser(Long userId, UpdateUserRequest request) {
 
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() ->
                         new IllegalArgumentException("존재하지 않는 회원입니다.")
                 );
@@ -75,8 +75,6 @@ public class UserService {
                 request.getName(),
                 request.getPassword()
         );
-
-        userRepository.save(user);
 
         return "회원정보 수정 완료";
     }
