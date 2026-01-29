@@ -4,6 +4,7 @@ import com.shop.phoneshop.dto.*;
 import com.shop.phoneshop.model.User;
 import com.shop.phoneshop.repository.UserRepository;
 import com.shop.phoneshop.security.JwtTokenProvider;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -64,6 +65,7 @@ public class UserService {
     }
 
     /// 회원정보 수정
+    @Transactional
     public String updateUser(Long userId, UpdateUserRequest request) {
 
         User user = userRepository.findById(userId)
