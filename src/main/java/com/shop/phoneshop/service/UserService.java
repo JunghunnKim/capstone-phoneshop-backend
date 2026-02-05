@@ -33,11 +33,18 @@ public class UserService {
 
     /// 로그인
     public LoginResponse login(LoginRequest request) {
+
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("이메일 없음"));
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "이메일 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요."
+                        )
+                );
 
         if (!user.getPassword().equals(request.getPassword())) {
-            throw new IllegalArgumentException("비밀번호 불일치");
+            throw new IllegalArgumentException(
+                    "이메일 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요."
+            );
         }
 
         String token = jwtTokenProvider.createToken(user.getId());
