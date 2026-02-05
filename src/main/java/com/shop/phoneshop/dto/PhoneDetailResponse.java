@@ -12,4 +12,12 @@ public class PhoneDetailResponse {
     private String brand;
     private int price;
     private String imageUrl;
+
+    // 스펙
+    private String display;
+    private String processor;
+    private String ram;
+    private String storage;
+    private String battery;
+    private String camera;
 }
