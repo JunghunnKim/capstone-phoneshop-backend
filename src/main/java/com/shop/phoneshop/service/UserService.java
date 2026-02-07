@@ -1,6 +1,7 @@
 package com.shop.phoneshop.service;
 
 import com.shop.phoneshop.dto.*;
+import com.shop.phoneshop.model.Role;
 import com.shop.phoneshop.model.User;
 import com.shop.phoneshop.repository.UserRepository;
 import com.shop.phoneshop.security.JwtTokenProvider;
@@ -46,9 +47,13 @@ public class UserService {
                     "이메일 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요."
             );
         }
+        Role role = user.getRole();
 
-        String token = jwtTokenProvider.createToken(user.getId());
-        return new LoginResponse(token);
+        if (role == null) {
+            role = Role.USER; // 기존 데이터 보호용
+        }
+
+        String token = jwtTokenProvider.createToken(user.getId(), role);return new LoginResponse(token);
     }
 
     /// 비밀번호 찾기(임시비밀번호 반환)

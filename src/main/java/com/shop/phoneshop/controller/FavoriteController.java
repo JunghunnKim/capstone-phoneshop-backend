@@ -1,6 +1,7 @@
 package com.shop.phoneshop.controller;
 
 import com.shop.phoneshop.dto.FavoritePhoneResponse;
+import com.shop.phoneshop.model.Role;
 import com.shop.phoneshop.security.JwtTokenProvider;
 import com.shop.phoneshop.service.FavoriteService;
 import lombok.RequiredArgsConstructor;
@@ -48,5 +49,10 @@ public class FavoriteController {
     private Long extractUserId(String authorization) {
         String token = authorization.replace("Bearer ", "");
         return jwtTokenProvider.getUserId(token);
+    }
+
+    private Role extractRole(String authorization) {
+        String token = authorization.replace("Bearer ", "");
+        return jwtTokenProvider.getRole(token);
     }
 }

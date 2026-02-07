@@ -3,6 +3,7 @@ package com.shop.phoneshop.controller;
 import com.shop.phoneshop.dto.PhoneRatingResponse;
 import com.shop.phoneshop.dto.PhoneReviewResponse;
 import com.shop.phoneshop.dto.ReviewCreateRequest;
+import com.shop.phoneshop.model.Role;
 import com.shop.phoneshop.security.JwtTokenProvider;
 import com.shop.phoneshop.service.ReviewService;
 import lombok.RequiredArgsConstructor;
@@ -59,5 +60,10 @@ public class ReviewController {
     private Long extractUserId(String authorization) {
         String token = authorization.replace("Bearer ", "");
         return jwtTokenProvider.getUserId(token);
+    }
+
+    private Role extractRole(String authorization) {
+        String token = authorization.replace("Bearer ", "");
+        return jwtTokenProvider.getRole(token);
     }
 }

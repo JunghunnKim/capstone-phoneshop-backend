@@ -1,6 +1,7 @@
 package com.shop.phoneshop.controller;
 
 import com.shop.phoneshop.dto.*;
+import com.shop.phoneshop.model.Role;
 import com.shop.phoneshop.security.JwtTokenProvider;
 import com.shop.phoneshop.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -58,4 +59,8 @@ public class UserController {
         return jwtTokenProvider.getUserId(token);
     }
 
+    private Role extractRole(String authorization) {
+        String token = authorization.replace("Bearer ", "");
+        return jwtTokenProvider.getRole(token);
+    }
 }
