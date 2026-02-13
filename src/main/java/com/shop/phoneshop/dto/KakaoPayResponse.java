@@ -12,6 +12,7 @@ public class KakaoPayResponse {
 
         String tid;
         String next_redirect_pc_url;
+        String next_redirect_app_url;
     }
 
     @Getter
