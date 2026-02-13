@@ -2,6 +2,8 @@ package com.shop.phoneshop.dto;
 
 import lombok.*;
 
+import java.util.List;
+
 public class KakaoPayRequest {
 
     @Getter
@@ -10,8 +12,15 @@ public class KakaoPayRequest {
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
     public static class OrderRequest {
 
-        String itemName;
-        String quantity;
-        String totalPrice;
+        private Long userId;
+        private List<OrderItemRequest> items;
+    }
+
+    @Getter
+    public static class OrderItemRequest {
+
+        private Long phoneId;
+        private int quantity;
+
     }
 }

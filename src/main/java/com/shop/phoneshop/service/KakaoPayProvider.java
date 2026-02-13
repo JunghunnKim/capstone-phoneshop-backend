@@ -4,6 +4,11 @@ import com.shop.phoneshop.dto.KakaoPayRequest;
 import com.shop.phoneshop.dto.KakaoPayRequest.*;
 import com.shop.phoneshop.dto.KakaoPayResponse;
 import com.shop.phoneshop.dto.KakaoPayResponse.*;
+import com.shop.phoneshop.model.*;
+import com.shop.phoneshop.repository.OrderRepository;
+import com.shop.phoneshop.repository.PaymentRepository;
+import com.shop.phoneshop.repository.PhoneRepository;
+import com.shop.phoneshop.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -26,6 +32,12 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class KakaoPayProvider {
 
+    private final OrderRepository orderRepository;
+    private final PaymentRepository paymentRepository;
+    private final PhoneRepository phoneRepository;
+    private final UserRepository userRepository;
+    private final OrderService orderService;
+
     @Value("${kakaopay.secretKey}")
     private String secretKey;
 
@@ -34,30 +46,81 @@ public class KakaoPayProvider {
 
     public ReadyResponse ready(OrderRequest request) {
 
+        // 주문 생성
+        Order order = orderService.createOrder(request);
+
+        User user = order.getUser();
+
+        if (order.getItems() == null || order.getItems().isEmpty()) {
+            throw new RuntimeException("주문 상품이 존재하지 않습니다.");
+        }
+
+        // Payment 생성
+        Payment payment = Payment.builder()
+                .partnerOrderId(order.getId().toString())
+                .partnerUserId(user.getId().toString())
+                .amount(order.getFinalPrice())
+                .status(PaymentStatus.READY)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        paymentRepository.save(payment);
+
+        // ---------------- 카카오 ready 호출 ----------------
+
         Map<String, String> parameters = new HashMap<>();
 
-        parameters.put("cid", cid); // 가맹점 코드, 테스트용은 TC0ONETIME
-        parameters.put("partner_order_id", "1234567890"); // 주문번호, 임시 : 1234567890
-        parameters.put("partner_user_id", "1234567890"); // 회원아이디, 임시 : 1234567890
-        parameters.put("item_name", request.getItemName()); // 상품명
-        parameters.put("quantity", request.getQuantity()); // 상품 수량
-        parameters.put("total_amount", request.getTotalPrice()); // 상품 총액
-        parameters.put("tax_free_amount", "0"); // 상품 비과세 금액
-        parameters.put("approval_url", "https://localhost:8080/api/v1/kakao-pay/approve"); // 결제 성공 시 redirct URL
-        parameters.put("cancel_url", "https://localhost:8080/api/v1/kakao-pay/cancel"); // 결제 취소 시
-        parameters.put("fail_url", "https://localhost:8080/kakao-pay/fail"); // 결제 실패 시
+        parameters.put("cid", cid);
+        parameters.put("partner_order_id", order.getId().toString());
+        parameters.put("partner_user_id", user.getId().toString());
 
-        HttpEntity<Map<String, String>> entity = new HttpEntity<>(parameters, getHeaders());
+        // 다중상품 기준으로만 처리
+        String firstItemName = order.getItems().get(0).getPhone().getName();
+        int itemCount = order.getItems().size();
+
+        String itemName = (itemCount > 1)
+                ? firstItemName + " 외 " + (itemCount - 1) + "건"
+                : firstItemName;
+
+        int totalQuantity = order.getItems()
+                .stream()
+                .mapToInt(OrderItem::getQuantity)
+                .sum();
+
+        parameters.put("item_name", itemName);
+        parameters.put("quantity", String.valueOf(totalQuantity));
+        parameters.put("total_amount", String.valueOf(order.getFinalPrice()));
+        parameters.put("tax_free_amount", "0");
+        parameters.put("approval_url", "http://localhost:8080/api/v1/kakao-pay/approve");
+        parameters.put("cancel_url", "http://localhost:8080/api/v1/kakao-pay/cancel");
+        parameters.put("fail_url", "http://localhost:8080/api/v1/kakao-pay/fail");
+
+        HttpEntity<Map<String, String>> entity =
+                new HttpEntity<>(parameters, getHeaders());
 
         RestTemplate restTemplate = new RestTemplate();
-        String url = "https://open-api.kakaopay.com/online/v1/payment/ready";
-        ResponseEntity<ReadyResponse> response = restTemplate.postForEntity(url, entity, ReadyResponse.class);
 
-        SessionProvider.addAttribute("tid",
-                Objects.requireNonNull(response.getBody()).getTid());
+        ResponseEntity<ReadyResponse> response =
+                restTemplate.postForEntity(
+                        "https://open-api.kakaopay.com/online/v1/payment/ready",
+                        entity,
+                        ReadyResponse.class
+                );
 
-        return response.getBody();
+        ReadyResponse body = response.getBody();
+
+        if (body == null) {
+            throw new RuntimeException("카카오페이 ready 응답이 없습니다.");
+        }
+
+        // tid 저장
+        payment.updateTid(body.getTid());
+        paymentRepository.save(payment);
+
+        return body;
     }
+
+
 
     private HttpHeaders getHeaders() {
         HttpHeaders headers = new HttpHeaders();
@@ -69,38 +132,45 @@ public class KakaoPayProvider {
 
 
     public ApproveResponse approve(String pgToken) {
+
+        // tid를 세션이 아니라 DB에서 조회해야 함
+        Payment payment = paymentRepository.findTopByStatusOrderByCreatedAtDesc(PaymentStatus.READY)
+                .orElseThrow(() -> new RuntimeException("결제 대기 정보가 없습니다."));
+
         Map<String, String> parameters = new HashMap<>();
         parameters.put("cid", cid);
-        parameters.put("tid", SessionProvider.getStringAttribute("tid"));
-        parameters.put("partner_order_id", "1234567890");
-        parameters.put("partner_user_id", "1234567890");
-        parameters.put("pg_token", pgToken); // 결제승인 요청을 인증하는 토큰
+        parameters.put("tid", payment.getTid());
+        parameters.put("partner_order_id", payment.getPartnerOrderId());
+        parameters.put("partner_user_id", payment.getPartnerUserId());
+        parameters.put("pg_token", pgToken);
 
-        HttpEntity<Map<String, String>> entity = new HttpEntity<>(parameters, getHeaders());
+        HttpEntity<Map<String, String>> entity =
+                new HttpEntity<>(parameters, getHeaders());
 
         RestTemplate restTemplate = new RestTemplate();
-        String url = "https://open-api.kakaopay.com/online/v1/payment/approve";
-        ResponseEntity<ApproveResponse> response = restTemplate.postForEntity(url, entity, ApproveResponse.class);
 
-        return response.getBody();
-    }
+        ResponseEntity<ApproveResponse> response =
+                restTemplate.postForEntity(
+                        "https://open-api.kakaopay.com/online/v1/payment/approve",
+                        entity,
+                        ApproveResponse.class
+                );
 
+        ApproveResponse body = response.getBody();
 
+        // Payment 성공 처리
+        payment.markSuccess();
+        paymentRepository.save(payment);
 
-    public static class SessionProvider {
+        // Order 상태 변경
+        Long orderId = Long.parseLong(payment.getPartnerOrderId());
 
-        public static void addAttribute(String key, Object value) {
-            Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
-                    .setAttribute(key, value, RequestAttributes.SCOPE_SESSION);
-        }
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
 
-        public static Object getAttribute(String key) {
-            return Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
-                    .getAttribute(key, RequestAttributes.SCOPE_SESSION);
-        }
+        order.markPaid();
+        orderRepository.save(order);
 
-        public static String getStringAttribute(String key) {
-            return (String) getAttribute(key);
-        }
+        return body;
     }
 }
