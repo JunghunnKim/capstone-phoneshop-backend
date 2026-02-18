@@ -16,12 +16,10 @@ public class Cart {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 유저 1 : 장바구니 1
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    // 장바구니 1 : 장바구니 아이템 N
     @OneToMany(
             mappedBy = "cart",
             cascade = CascadeType.ALL,

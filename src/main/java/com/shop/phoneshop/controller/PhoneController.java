@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shop.phoneshop.dto.PhoneCreateRequest;
 import com.shop.phoneshop.dto.PhoneDetailResponse;
 import com.shop.phoneshop.dto.PhoneResponse;
+import com.shop.phoneshop.exception.ForbiddenException;
+import com.shop.phoneshop.model.Role;
+import com.shop.phoneshop.security.JwtTokenProvider;
 import com.shop.phoneshop.service.PhoneService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,21 +22,29 @@ public class PhoneController {
 
     private final PhoneService phoneService;
     private final ObjectMapper objectMapper;
+    private final JwtTokenProvider jwtTokenProvider;
 
     /// 핸드폰 등록
     @PostMapping(consumes = "multipart/form-data")
     @ResponseStatus(HttpStatus.CREATED)
     public void createPhone(
+            @RequestHeader("Authorization") String authorization,
             @RequestPart("phone") String phoneJson,
             @RequestPart("image") MultipartFile image
     ) throws Exception {
 
-        // JSON 문자열 → DTO 변환
+        Role role = extractRole(authorization);
+
+        if (role != Role.ADMIN) {
+            throw new ForbiddenException("관리자만 핸드폰을 등록할 수 있습니다.");
+        }
+
         PhoneCreateRequest request =
                 objectMapper.readValue(phoneJson, PhoneCreateRequest.class);
 
         phoneService.createPhone(request, image);
     }
+
 
     /// 전체 핸드폰 조회
     @GetMapping
@@ -45,5 +56,16 @@ public class PhoneController {
     @GetMapping("/{id}")
     public PhoneDetailResponse getPhone(@PathVariable Long id) {
         return phoneService.getPhoneById(id);
+    }
+
+    /// 공통 메서드
+    private Long extractUserId(String authorization) {
+        String token = authorization.replace("Bearer ", "");
+        return jwtTokenProvider.getUserId(token);
+    }
+
+    private Role extractRole(String authorization) {
+        String token = authorization.replace("Bearer ", "");
+        return jwtTokenProvider.getRole(token);
     }
 }

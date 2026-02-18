@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 public class PhoneReviewResponse {
 
     private Long reviewId;
-    private int rating;
+    private double rating;
     private String content;
     private Long userId;
     private String userName;

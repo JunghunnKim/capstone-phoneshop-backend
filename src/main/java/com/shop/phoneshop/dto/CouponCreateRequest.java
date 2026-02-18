@@ -5,8 +5,9 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class UpdateUserRequest {
+public class CouponCreateRequest {
 
     private String name;
-    private String password;
+    private int discountRate;
 }
+

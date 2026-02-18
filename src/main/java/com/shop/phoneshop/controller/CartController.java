@@ -4,6 +4,7 @@ import com.shop.phoneshop.dto.CartItemAddRequest;
 import com.shop.phoneshop.dto.CartItemDecreaseRequest;
 import com.shop.phoneshop.dto.CartItemResponse;
 import com.shop.phoneshop.dto.CartResponse;
+import com.shop.phoneshop.model.Role;
 import com.shop.phoneshop.security.JwtTokenProvider;
 import com.shop.phoneshop.service.CartService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,7 +31,7 @@ public class CartController {
         cartService.addItem(userId, request);
     }
 
-    /// 장바구니 수량 감소 (1개씩)
+    /// 장바구니 수량 감소 (-1)
     @PostMapping("/items/decrease")
     public void decreaseItem(
             @RequestHeader("Authorization") String authorization,
@@ -49,7 +50,7 @@ public class CartController {
         return cartService.getMyCart(userId);
     }
 
-
+    /// 장바구니 품목 전체 삭제
     @DeleteMapping
     public void clearCart(
             @RequestHeader("Authorization") String authorization
@@ -63,4 +64,8 @@ public class CartController {
         return jwtTokenProvider.getUserId(token);
     }
 
+    private Role extractRole(String authorization) {
+        String token = authorization.replace("Bearer ", "");
+        return jwtTokenProvider.getRole(token);
+    }
 }

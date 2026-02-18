@@ -26,7 +26,4 @@ public class CartItemResponse {
                 .build();
     }
 
-    public int getItemTotalPrice() {
-        return price * quantity;
-    }
 }

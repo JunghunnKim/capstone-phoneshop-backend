@@ -3,6 +3,7 @@ package com.shop.phoneshop.controller;
 import com.shop.phoneshop.dto.CommentCreateRequest;
 import com.shop.phoneshop.dto.CommentResponse;
 import com.shop.phoneshop.dto.CommentUpdateRequest;
+import com.shop.phoneshop.model.Role;
 import com.shop.phoneshop.security.JwtTokenProvider;
 import com.shop.phoneshop.service.CommentService;
 import lombok.RequiredArgsConstructor;
@@ -59,5 +60,10 @@ public class CommentController {
     private Long extractUserId(String authorization) {
         String token = authorization.replace("Bearer ", "");
         return jwtTokenProvider.getUserId(token);
+    }
+
+    private Role extractRole(String authorization) {
+        String token = authorization.replace("Bearer ", "");
+        return jwtTokenProvider.getRole(token);
     }
 }

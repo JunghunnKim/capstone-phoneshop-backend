@@ -1,6 +1,10 @@
 jwt:
-  secret: capstone-2026-phone-team-secret-jwt-key
+  secret: Y2Fwc3RvbmUtMjAyNi1waG9uZS10ZWFtLXNlY3JldC1qd3Qta2V5
   expiration: 3600000
+
+kakaopay:
+  secretKey: ${KAKAOPAY_SECRET_KEY}
+  cid: TC0ONETIME
 
 spring:
 
@@ -16,3 +20,4 @@ spring:
     properties:
       hibernate:
         format_sql: true
+

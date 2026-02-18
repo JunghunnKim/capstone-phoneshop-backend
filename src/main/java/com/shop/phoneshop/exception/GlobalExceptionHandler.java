@@ -4,13 +4,22 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.NoSuchElementException;
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // ❌ 리소스 없음 (404)
     @ExceptionHandler(NoSuchElementException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleNotFound(NoSuchElementException e) {
-        return e.getMessage();
+    public Map<String, String> handleNotFound(NoSuchElementException e) {
+        return Map.of("message", e.getMessage());
+    }
+
+    // ❌ 잘못된 요청 (로그인 실패, 검증 실패 등)
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleBadRequest(IllegalArgumentException e) {
+        return Map.of("message", e.getMessage());
     }
 }

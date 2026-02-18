@@ -23,10 +23,15 @@ public class User {
 
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
     public User(String email, String password, String name) {
         this.email = email;
         this.password = password;
         this.name = name;
+        this.role = Role.USER;
     }
 
     /// 비밀번호 변경메서드
@@ -38,6 +43,11 @@ public class User {
     public void updateInfo(String name, String password) {
         this.name = name;
         this.password = password;
+    }
+
+    /// 관리자 여부 체크 (나중에 유용)
+    public boolean isAdmin() {
+        return this.role == Role.ADMIN;
     }
 }
 

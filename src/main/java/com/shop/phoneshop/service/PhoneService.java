@@ -43,7 +43,13 @@ public class PhoneService {
                 request.getName(),
                 request.getBrand(),
                 request.getPrice(),
-                "/images/phones/" + savedFilename
+                "/images/phones/" + savedFilename,
+                request.getDisplay(),
+                request.getProcessor(),
+                request.getRam(),
+                request.getStorage(),
+                request.getBattery(),
+                request.getCamera()
         );
 
         phoneRepository.save(phone);
@@ -74,6 +80,12 @@ public class PhoneService {
                 .brand(phone.getBrand())
                 .price(phone.getPrice())
                 .imageUrl(phone.getImageUrl())
+                .display(phone.getDisplay())
+                .processor(phone.getProcessor())
+                .ram(phone.getRam())
+                .storage(phone.getStorage())
+                .battery(phone.getBattery())
+                .camera(phone.getCamera())
                 .build();
     }
 }

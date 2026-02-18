@@ -1,9 +1,11 @@
 package com.shop.phoneshop.service;
 
 import com.shop.phoneshop.dto.*;
+import com.shop.phoneshop.model.Role;
 import com.shop.phoneshop.model.User;
 import com.shop.phoneshop.repository.UserRepository;
 import com.shop.phoneshop.security.JwtTokenProvider;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -32,15 +34,26 @@ public class UserService {
 
     /// 로그인
     public LoginResponse login(LoginRequest request) {
+
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("이메일 없음"));
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "이메일 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요."
+                        )
+                );
 
         if (!user.getPassword().equals(request.getPassword())) {
-            throw new IllegalArgumentException("비밀번호 불일치");
+            throw new IllegalArgumentException(
+                    "이메일 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요."
+            );
+        }
+        Role role = user.getRole();
+
+        if (role == null) {
+            role = Role.USER; // 기존 데이터 보호용
         }
 
-        String token = jwtTokenProvider.createToken(user.getId());
-        return new LoginResponse(token);
+        String token = jwtTokenProvider.createToken(user.getId(), role);return new LoginResponse(token);
     }
 
     /// 비밀번호 찾기(임시비밀번호 반환)
@@ -64,9 +77,10 @@ public class UserService {
     }
 
     /// 회원정보 수정
-    public String updateUser(UpdateUserRequest request) {
+    @Transactional
+    public String updateUser(Long userId, UpdateUserRequest request) {
 
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() ->
                         new IllegalArgumentException("존재하지 않는 회원입니다.")
                 );
@@ -75,8 +89,6 @@ public class UserService {
                 request.getName(),
                 request.getPassword()
         );
-
-        userRepository.save(user);
 
         return "회원정보 수정 완료";
     }
