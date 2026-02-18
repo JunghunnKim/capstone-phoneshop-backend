@@ -14,6 +14,7 @@ public class KakaoPayRequest {
 
         private Long userId;
         private List<OrderItemRequest> items;
+        private Long userCouponId;
     }
 
     @Getter

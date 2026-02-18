@@ -5,10 +5,7 @@ import com.shop.phoneshop.dto.KakaoPayRequest.*;
 import com.shop.phoneshop.dto.KakaoPayResponse;
 import com.shop.phoneshop.dto.KakaoPayResponse.*;
 import com.shop.phoneshop.model.*;
-import com.shop.phoneshop.repository.OrderRepository;
-import com.shop.phoneshop.repository.PaymentRepository;
-import com.shop.phoneshop.repository.PhoneRepository;
-import com.shop.phoneshop.repository.UserRepository;
+import com.shop.phoneshop.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,9 +31,9 @@ public class KakaoPayProvider {
 
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
-    private final PhoneRepository phoneRepository;
-    private final UserRepository userRepository;
     private final OrderService orderService;
+    private final UserCouponRepository userCouponRepository;
+
 
     @Value("${kakaopay.secretKey}")
     private String secretKey;
@@ -50,6 +47,31 @@ public class KakaoPayProvider {
         Order order = orderService.createOrder(request);
 
         User user = order.getUser();
+
+        // 쿠폰적용
+        if (request.getUserCouponId() != null) {
+
+            UserCoupon userCoupon = userCouponRepository.findById(request.getUserCouponId())
+                    .orElseThrow(() -> new RuntimeException("쿠폰이 존재하지 않습니다."));
+
+            if (userCoupon.isUsed()) {
+                throw new RuntimeException("이미 사용된 쿠폰입니다.");
+            }
+
+            if (!userCoupon.getUser().getId().equals(user.getId())) {
+                throw new RuntimeException("본인의 쿠폰만 사용할 수 있습니다.");
+            }
+
+            int discountRate = userCoupon.getCoupon().getDiscountRate();
+
+            int originalPrice = order.getFinalPrice();
+            int discountAmount = originalPrice * discountRate / 100;
+            int discountedPrice = originalPrice - discountAmount;
+
+            order.updateFinalPrice(discountedPrice);
+
+            userCoupon.markUsed();
+        }
 
         if (order.getItems() == null || order.getItems().isEmpty()) {
             throw new RuntimeException("주문 상품이 존재하지 않습니다.");

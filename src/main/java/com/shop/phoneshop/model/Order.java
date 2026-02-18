@@ -66,4 +66,10 @@ public class Order {
         this.finalPrice = finalPrice;
     }
 
+    // 쿠폰 적용 최종 결제 금액 최신화
+    public void updateFinalPrice(int finalPrice) {
+        this.finalPrice = finalPrice;
+    }
+
+
 }
