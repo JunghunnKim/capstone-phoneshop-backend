@@ -45,7 +45,6 @@ public class KakaoPayProvider {
 
         // 주문 생성
         Order order = orderService.createOrder(request);
-
         User user = order.getUser();
 
         // 쿠폰적용
@@ -69,8 +68,6 @@ public class KakaoPayProvider {
             int discountedPrice = originalPrice - discountAmount;
 
             order.updateFinalPrice(discountedPrice);
-
-            userCoupon.markUsed();
         }
 
         if (order.getItems() == null || order.getItems().isEmpty()) {
@@ -85,6 +82,11 @@ public class KakaoPayProvider {
                 .status(PaymentStatus.READY)
                 .createdAt(LocalDateTime.now())
                 .build();
+
+        // 쿠폰 선택했으면 Payment에 저장
+        if (request.getUserCouponId() != null) {
+            payment.applyCoupon(request.getUserCouponId());
+        }
 
         paymentRepository.save(payment);
 
@@ -192,6 +194,16 @@ public class KakaoPayProvider {
 
         order.markPaid();
         orderRepository.save(order);
+
+        // 쿠폰 사용 처리
+        if (payment.getUserCouponId() != null) {
+
+            UserCoupon userCoupon = userCouponRepository.findById(
+                    payment.getUserCouponId()
+            ).orElseThrow(() -> new RuntimeException("쿠폰 없음"));
+
+            userCoupon.markUsed();
+        }
 
         return body;
     }
