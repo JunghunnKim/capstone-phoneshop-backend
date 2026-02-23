@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shop.phoneshop.dto.PhoneCreateRequest;
 import com.shop.phoneshop.dto.PhoneDetailResponse;
 import com.shop.phoneshop.dto.PhoneResponse;
+import com.shop.phoneshop.exception.AdminOnlyException;
 import com.shop.phoneshop.exception.ForbiddenException;
 import com.shop.phoneshop.model.Role;
 import com.shop.phoneshop.security.JwtTokenProvider;
@@ -33,11 +34,7 @@ public class PhoneController {
             @RequestPart("image") MultipartFile image
     ) throws Exception {
 
-        Role role = extractRole(authorization);
-
-        if (role != Role.ADMIN) {
-            throw new ForbiddenException("관리자만 핸드폰을 등록할 수 있습니다.");
-        }
+        validateAdmin(authorization);
 
         PhoneCreateRequest request =
                 objectMapper.readValue(phoneJson, PhoneCreateRequest.class);
@@ -58,14 +55,15 @@ public class PhoneController {
         return phoneService.getPhoneById(id);
     }
 
-    /// 공통 메서드
-    private Long extractUserId(String authorization) {
-        String token = authorization.replace("Bearer ", "");
-        return jwtTokenProvider.getUserId(token);
-    }
-
     private Role extractRole(String authorization) {
         String token = authorization.replace("Bearer ", "");
         return jwtTokenProvider.getRole(token);
+    }
+
+    private void validateAdmin(String authorization) {
+        Role role = extractRole(authorization);
+        if (role != Role.ADMIN) {
+            throw new AdminOnlyException();
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.shop.phoneshop.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.NoSuchElementException;
@@ -8,6 +9,13 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    // 관리자 권한 없음
+    @ExceptionHandler(AdminOnlyException.class)
+    public ResponseEntity<?> handleAdminOnlyException(AdminOnlyException e) {
+        return ResponseEntity
+                .status(e.getStatus())
+                .body(e.getMessage());
+    }
 
     // ❌ 리소스 없음 (404)
     @ExceptionHandler(NoSuchElementException.class)
