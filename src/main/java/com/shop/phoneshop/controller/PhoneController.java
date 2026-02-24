@@ -55,6 +55,17 @@ public class PhoneController {
         return phoneService.getPhoneById(id);
     }
 
+    /// 특정 핸드폰 삭제
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePhone(
+            @RequestHeader("Authorization") String authorization,
+            @PathVariable Long id
+    ) {
+        validateAdmin(authorization);
+        phoneService.deletePhone(id);
+    }
+
     private Role extractRole(String authorization) {
         String token = authorization.replace("Bearer ", "");
         return jwtTokenProvider.getRole(token);

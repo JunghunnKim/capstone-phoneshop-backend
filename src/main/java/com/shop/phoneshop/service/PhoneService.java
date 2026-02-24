@@ -88,4 +88,35 @@ public class PhoneService {
                 .camera(phone.getCamera())
                 .build();
     }
+
+    /// 특정 핸드폰 삭제
+    public void deletePhone(Long id) {
+
+        Phone phone = phoneRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("해당 핸드폰이 존재하지 않습니다."));
+
+        deleteImageFile(phone.getImageUrl());
+
+        phoneRepository.delete(phone);
+    }
+
+    private void deleteImageFile(String imageUrl) {
+
+        if (imageUrl == null || imageUrl.isBlank()) return;
+
+        // imageUrl: /images/phones/abc.jpg
+        String filename = imageUrl.replace("/images/phones/", "");
+        String filePath = System.getProperty("user.dir")
+                + "/uploads/phones/"
+                + filename;
+
+        File file = new File(filePath);
+
+        if (file.exists()) {
+            boolean deleted = file.delete();
+            if (!deleted) {
+                System.out.println("이미지 파일 삭제 실패: " + filePath);
+            }
+        }
+    }
 }
