@@ -4,6 +4,7 @@ import com.shop.phoneshop.dto.KakaoPayRequest;
 import com.shop.phoneshop.dto.KakaoPayRequest.*;
 import com.shop.phoneshop.dto.KakaoPayResponse;
 import com.shop.phoneshop.dto.KakaoPayResponse.*;
+import com.shop.phoneshop.exception.*;
 import com.shop.phoneshop.model.*;
 import com.shop.phoneshop.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -43,41 +44,34 @@ public class KakaoPayProvider {
 
     public ReadyResponse ready(OrderRequest request) {
 
-        // 주문 생성
         Order order = orderService.createOrder(request);
-
         User user = order.getUser();
 
-        // 쿠폰적용
+        // 쿠폰 적용
         if (request.getUserCouponId() != null) {
 
             UserCoupon userCoupon = userCouponRepository.findById(request.getUserCouponId())
-                    .orElseThrow(() -> new RuntimeException("쿠폰이 존재하지 않습니다."));
+                    .orElseThrow(CouponNotFoundException::new);
 
             if (userCoupon.isUsed()) {
-                throw new RuntimeException("이미 사용된 쿠폰입니다.");
+                throw new CouponAlreadyUsedException();
             }
 
             if (!userCoupon.getUser().getId().equals(user.getId())) {
-                throw new RuntimeException("본인의 쿠폰만 사용할 수 있습니다.");
+                throw new InvalidCouponOwnerException();
             }
 
             int discountRate = userCoupon.getCoupon().getDiscountRate();
-
             int originalPrice = order.getFinalPrice();
-            int discountAmount = originalPrice * discountRate / 100;
-            int discountedPrice = originalPrice - discountAmount;
+            int discountedPrice = originalPrice - (originalPrice * discountRate / 100);
 
             order.updateFinalPrice(discountedPrice);
-
-            userCoupon.markUsed();
         }
 
         if (order.getItems() == null || order.getItems().isEmpty()) {
-            throw new RuntimeException("주문 상품이 존재하지 않습니다.");
+            throw new EmptyOrderItemException();
         }
 
-        // Payment 생성
         Payment payment = Payment.builder()
                 .partnerOrderId(order.getId().toString())
                 .partnerUserId(user.getId().toString())
@@ -86,62 +80,62 @@ public class KakaoPayProvider {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        paymentRepository.save(payment);
-
-        // ---------------- 카카오 ready 호출 ----------------
-
-        Map<String, String> parameters = new HashMap<>();
-
-        parameters.put("cid", cid);
-        parameters.put("partner_order_id", order.getId().toString());
-        parameters.put("partner_user_id", user.getId().toString());
-
-        // 다중상품 기준으로만 처리
-        String firstItemName = order.getItems().get(0).getPhone().getName();
-        int itemCount = order.getItems().size();
-
-        String itemName = (itemCount > 1)
-                ? firstItemName + " 외 " + (itemCount - 1) + "건"
-                : firstItemName;
-
-        int totalQuantity = order.getItems()
-                .stream()
-                .mapToInt(OrderItem::getQuantity)
-                .sum();
-
-        parameters.put("item_name", itemName);
-        parameters.put("quantity", String.valueOf(totalQuantity));
-        parameters.put("total_amount", String.valueOf(order.getFinalPrice()));
-        parameters.put("tax_free_amount", "0");
-        parameters.put("approval_url", "http://localhost:8080/api/v1/kakao-pay/approve");
-        parameters.put("cancel_url", "http://localhost:8080/api/v1/kakao-pay/cancel");
-        parameters.put("fail_url", "http://localhost:8080/api/v1/kakao-pay/fail");
-
-        HttpEntity<Map<String, String>> entity =
-                new HttpEntity<>(parameters, getHeaders());
-
-        RestTemplate restTemplate = new RestTemplate();
-
-        ResponseEntity<ReadyResponse> response =
-                restTemplate.postForEntity(
-                        "https://open-api.kakaopay.com/online/v1/payment/ready",
-                        entity,
-                        ReadyResponse.class
-                );
-
-        ReadyResponse body = response.getBody();
-
-        if (body == null) {
-            throw new RuntimeException("카카오페이 ready 응답이 없습니다.");
+        if (request.getUserCouponId() != null) {
+            payment.applyCoupon(request.getUserCouponId());
         }
 
-        // tid 저장
+        paymentRepository.save(payment);
+
+        ReadyResponse body = callKakaoReady(order, user);
+
         payment.updateTid(body.getTid());
         paymentRepository.save(payment);
 
         return body;
     }
 
+    private ReadyResponse callKakaoReady(Order order, User user) {
+
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("cid", cid);
+        parameters.put("partner_order_id", order.getId().toString());
+        parameters.put("partner_user_id", user.getId().toString());
+
+        String firstItemName = order.getItems().get(0).getPhone().getName();
+        int itemCount = order.getItems().size();
+
+        parameters.put("item_name",
+                itemCount > 1 ? firstItemName + " 외 " + (itemCount - 1) + "건" : firstItemName);
+
+        parameters.put("quantity", String.valueOf(
+                order.getItems().stream().mapToInt(OrderItem::getQuantity).sum()
+        ));
+        parameters.put("total_amount", String.valueOf(order.getFinalPrice()));
+        parameters.put("tax_free_amount", "0");
+        parameters.put("approval_url", "http://localhost:8080/api/v1/kakao-pay/approve");
+        parameters.put("cancel_url", "http://localhost:8080/api/v1/kakao-pay/cancel");
+        parameters.put("fail_url", "http://localhost:8080/api/v1/kakao-pay/fail");
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<ReadyResponse> response =
+                    restTemplate.postForEntity(
+                            "https://open-api.kakaopay.com/online/v1/payment/ready",
+                            new HttpEntity<>(parameters, getHeaders()),
+                            ReadyResponse.class
+                    );
+
+            if (response.getBody() == null) {
+                throw new KakaoPayApiException("카카오페이 ready 응답이 없습니다.");
+            }
+
+            return response.getBody();
+
+        } catch (Exception e) {
+            log.error("카카오페이 ready 실패", e);
+            throw new KakaoPayApiException("카카오페이 결제 준비 중 오류 발생");
+        }
+    }
 
 
     private HttpHeaders getHeaders() {
@@ -157,7 +151,7 @@ public class KakaoPayProvider {
 
         // tid를 세션이 아니라 DB에서 조회해야 함
         Payment payment = paymentRepository.findTopByStatusOrderByCreatedAtDesc(PaymentStatus.READY)
-                .orElseThrow(() -> new RuntimeException("결제 대기 정보가 없습니다."));
+                .orElseThrow(PaymentNotFoundException::new);
 
         Map<String, String> parameters = new HashMap<>();
         parameters.put("cid", cid);
@@ -188,10 +182,20 @@ public class KakaoPayProvider {
         Long orderId = Long.parseLong(payment.getPartnerOrderId());
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
+                .orElseThrow(OrderNotFoundException::new);
 
         order.markPaid();
         orderRepository.save(order);
+
+        // 쿠폰 사용 처리
+        if (payment.getUserCouponId() != null) {
+
+            UserCoupon userCoupon = userCouponRepository.findById(
+                    payment.getUserCouponId()
+            ).orElseThrow(CouponNotFoundException::new);
+
+            userCoupon.markUsed();
+        }
 
         return body;
     }

@@ -20,8 +20,6 @@ public class Phone {
     private String brand;
     private int price;
     private String imageUrl;
-
-    // ✅ 스펙 필드 추가
     private String display;
     private String processor;
     private String ram;

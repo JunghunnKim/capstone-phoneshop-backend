@@ -23,12 +23,7 @@ public class JwtTokenProvider {
         this.expiration = expiration;
     }
 
-    // ✅ 기존 메서드 유지 (혹시 쓰는 곳 있을 수 있음)
-    public String createToken(Long userId) {
-        return createToken(userId, null);
-    }
-
-    // ✅ role 포함 토큰 생성, 오버로딩
+    // role 포함 토큰 생성, 오버로딩
     public String createToken(Long userId, Role role) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expiration);
@@ -54,7 +49,7 @@ public class JwtTokenProvider {
         );
     }
 
-    // ✅ role 꺼내는 메서드 추가
+    // role 꺼내는 메서드 추가
     public Role getRole(String token) {
         String role = Jwts.parserBuilder()
                 .setSigningKey(key)

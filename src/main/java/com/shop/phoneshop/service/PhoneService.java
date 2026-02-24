@@ -6,6 +6,7 @@ import com.shop.phoneshop.dto.PhoneResponse;
 import com.shop.phoneshop.model.Phone;
 import com.shop.phoneshop.repository.PhoneRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,24 +22,23 @@ public class PhoneService {
 
     private final PhoneRepository phoneRepository;
 
+    @Value("${app.base-url}")
+    private String baseUrl;
+
     /// 핸드폰 등록
     public void createPhone(PhoneCreateRequest request, MultipartFile image) throws IOException {
 
-        // 업로드 경로 (프로젝트 루트 기준)
         String uploadDir = System.getProperty("user.dir") + "/uploads/phones/";
         File dir = new File(uploadDir);
         if (!dir.exists()) {
             dir.mkdirs();
         }
 
-        // 파일명 생성
         String savedFilename = UUID.randomUUID() + "_" + image.getOriginalFilename();
-
-        // 파일 저장
         File saveFile = new File(uploadDir + savedFilename);
         image.transferTo(saveFile);
 
-        // DB 저장
+        // DB에는 경로만 저장
         Phone phone = new Phone(
                 request.getName(),
                 request.getBrand(),
@@ -64,7 +64,7 @@ public class PhoneService {
                         .name(phone.getName())
                         .brand(phone.getBrand())
                         .price(phone.getPrice())
-                        .imageUrl(phone.getImageUrl())
+                        .imageUrl(baseUrl + phone.getImageUrl())
                         .build())
                 .toList();
     }
@@ -79,7 +79,7 @@ public class PhoneService {
                 .name(phone.getName())
                 .brand(phone.getBrand())
                 .price(phone.getPrice())
-                .imageUrl(phone.getImageUrl())
+                .imageUrl(baseUrl + phone.getImageUrl())
                 .display(phone.getDisplay())
                 .processor(phone.getProcessor())
                 .ram(phone.getRam())
@@ -87,5 +87,36 @@ public class PhoneService {
                 .battery(phone.getBattery())
                 .camera(phone.getCamera())
                 .build();
+    }
+
+    /// 특정 핸드폰 삭제
+    public void deletePhone(Long id) {
+
+        Phone phone = phoneRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("해당 핸드폰이 존재하지 않습니다."));
+
+        deleteImageFile(phone.getImageUrl());
+
+        phoneRepository.delete(phone);
+    }
+
+    private void deleteImageFile(String imageUrl) {
+
+        if (imageUrl == null || imageUrl.isBlank()) return;
+
+        // imageUrl: /images/phones/abc.jpg
+        String filename = imageUrl.replace("/images/phones/", "");
+        String filePath = System.getProperty("user.dir")
+                + "/uploads/phones/"
+                + filename;
+
+        File file = new File(filePath);
+
+        if (file.exists()) {
+            boolean deleted = file.delete();
+            if (!deleted) {
+                System.out.println("이미지 파일 삭제 실패: " + filePath);
+            }
+        }
     }
 }

@@ -31,6 +31,13 @@ public class Payment {
     private LocalDateTime createdAt;
     private LocalDateTime approvedAt;
 
+    private Long userCouponId;
+
+
+    public void applyCoupon(Long userCouponId) {
+        this.userCouponId = userCouponId;
+    }
+
     public void updateTid(String tid) {
         this.tid = tid;
     }
