@@ -1,5 +1,11 @@
 package com.shop.phoneshop.service;
 
+import com.shop.phoneshop.dto.KakaoPayRequest.OrderItemRequest;
+import com.shop.phoneshop.dto.KakaoPayRequest.OrderRequest;
+import com.shop.phoneshop.exception.EmptyOrderItemException;
+import com.shop.phoneshop.exception.OrderNotFoundException;
+import com.shop.phoneshop.exception.PhoneNotFoundException;
+import com.shop.phoneshop.exception.UserNotFoundException;
 import com.shop.phoneshop.model.*;
 import com.shop.phoneshop.repository.OrderRepository;
 import com.shop.phoneshop.repository.PhoneRepository;
@@ -7,7 +13,7 @@ import com.shop.phoneshop.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.shop.phoneshop.dto.KakaoPayRequest.*;
+
 import java.time.LocalDateTime;
 
 @Service
@@ -20,12 +26,14 @@ public class OrderService {
     private final PhoneRepository phoneRepository;
 
     /// 다중 상품 주문 생성
-
-    @Transactional
     public Order createOrder(OrderRequest request) {
 
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new EmptyOrderItemException();
+        }
+
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(UserNotFoundException::new);
 
         Order order = Order.builder()
                 .user(user)
@@ -38,7 +46,7 @@ public class OrderService {
         for (OrderItemRequest itemRequest : request.getItems()) {
 
             Phone phone = phoneRepository.findById(itemRequest.getPhoneId())
-                    .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다."));
+                    .orElseThrow(PhoneNotFoundException::new);
 
             int itemTotalPrice = phone.getPrice() * itemRequest.getQuantity();
 
@@ -48,7 +56,6 @@ public class OrderService {
                     .build();
 
             order.addItem(orderItem);
-
             totalPrice += itemTotalPrice;
         }
 
@@ -56,21 +63,5 @@ public class OrderService {
         order.updatePrice(totalPrice, 0, totalPrice);
 
         return orderRepository.save(order);
-    }
-
-    /// 결제 완료 처리
-    public void markOrderPaid(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
-
-        order.markPaid();
-    }
-
-    /// 주문 취소
-    public void cancelOrder(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
-
-        order.cancel();
     }
 }
