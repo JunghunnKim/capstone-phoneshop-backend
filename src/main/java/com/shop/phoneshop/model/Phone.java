@@ -1,11 +1,16 @@
 package com.shop.phoneshop.model;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -26,6 +31,12 @@ public class Phone {
     private String storage;
     private String battery;
     private String camera;
+
+    @OneToMany(mappedBy = "phone", cascade = CascadeType.REMOVE)
+    private List<Comment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "phone", cascade = CascadeType.REMOVE)
+    private List<Review> reviews = new ArrayList<>();
 
     public Phone(
             String name,
