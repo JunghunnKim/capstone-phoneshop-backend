@@ -2,6 +2,7 @@ package com.shop.phoneshop.service;
 
 import com.shop.phoneshop.dto.KakaoPayRequest.OrderItemRequest;
 import com.shop.phoneshop.dto.KakaoPayRequest.OrderRequest;
+import com.shop.phoneshop.dto.OrderHistoryResponse;
 import com.shop.phoneshop.exception.EmptyOrderItemException;
 import com.shop.phoneshop.exception.OrderNotFoundException;
 import com.shop.phoneshop.exception.PhoneNotFoundException;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -63,5 +66,12 @@ public class OrderService {
         order.updatePrice(totalPrice, 0, totalPrice);
 
         return orderRepository.save(order);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderHistoryResponse> getPurchaseHistory(Long userId) {
+        return orderRepository.findAllPaidWithItemsByUserId(userId).stream()
+                .map(OrderHistoryResponse::from)
+                .collect(Collectors.toList());
     }
 }

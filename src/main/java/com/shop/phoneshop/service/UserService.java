@@ -116,4 +116,17 @@ public class UserService {
         return "회원 탈퇴 완료";
     }
 
+    /// 현재 회원 정보 조회 (이름 + ID)
+    public MemberInfoResponse getMemberInfo(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("존재하지 않는 회원입니다.")
+                );
+
+        return new MemberInfoResponse(
+                user.getId(),
+                user.getName()
+        );
+    }
+
 }
