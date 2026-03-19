@@ -47,6 +47,15 @@ public class UserController {
         return userService.updateUser(userId, request);
     }
 
+    /// 현재 로그인한 회원의 이름과 ID 조회
+    @GetMapping()
+    public MemberInfoResponse getCurrentUser(
+            @RequestHeader("Authorization") String authorization
+    ) {
+        Long userId = extractUserId(authorization);
+        return userService.getMemberInfo(userId);
+    }
+
     /// 회원 삭제
     @DeleteMapping("/withdraw")
     public String withdraw(@RequestBody WithdrawRequest request) {
