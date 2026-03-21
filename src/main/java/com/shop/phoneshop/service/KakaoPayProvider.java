@@ -35,6 +35,8 @@ public class KakaoPayProvider {
     private final OrderService orderService;
     private final UserCouponRepository userCouponRepository;
 
+    @Value("${app.base-url}")
+    private String baseUrl;
 
     @Value("${kakaopay.secretKey}")
     private String secretKey;
@@ -112,9 +114,9 @@ public class KakaoPayProvider {
         ));
         parameters.put("total_amount", String.valueOf(order.getFinalPrice()));
         parameters.put("tax_free_amount", "0");
-        parameters.put("approval_url", "http://localhost:8080/api/v1/kakao-pay/approve");
-        parameters.put("cancel_url", "http://localhost:8080/api/v1/kakao-pay/cancel");
-        parameters.put("fail_url", "http://localhost:8080/api/v1/kakao-pay/fail");
+        parameters.put("approval_url", baseUrl + "/api/v1/kakao-pay/approve");
+        parameters.put("cancel_url", baseUrl + "/api/v1/kakao-pay/cancel");
+        parameters.put("fail_url", baseUrl + "/api/v1/kakao-pay/fail");
 
         try {
             RestTemplate restTemplate = new RestTemplate();
