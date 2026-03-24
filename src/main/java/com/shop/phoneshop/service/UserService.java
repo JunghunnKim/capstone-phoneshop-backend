@@ -3,7 +3,7 @@ package com.shop.phoneshop.service;
 import com.shop.phoneshop.dto.*;
 import com.shop.phoneshop.model.Role;
 import com.shop.phoneshop.model.User;
-import com.shop.phoneshop.repository.UserRepository;
+import com.shop.phoneshop.repository.*;
 import com.shop.phoneshop.security.JwtTokenProvider;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +16,11 @@ import java.util.UUID;
 public class UserService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserCouponRepository userCouponRepository;
+    private final CartRepository cartRepository;
+    private final FavoriteRepository favoriteRepository;
+    private final ReviewRepository reviewRepository;
+    private final CommentRepository commentRepository;
 
     /// 회원가입
     public void signup(SignupRequest request) {
@@ -94,6 +99,7 @@ public class UserService {
     }
 
     /// 회원 탈퇴
+    @Transactional
     public String withdraw(WithdrawRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
@@ -110,6 +116,13 @@ public class UserService {
         if (!user.getPassword().equals(request.getPassword())) {
             throw new IllegalArgumentException("회원 정보가 일치하지 않습니다.");
         }
+
+        // FK 제약조건 해소: 연관 데이터 먼저 삭제
+        userCouponRepository.deleteByUserId(user.getId());
+        commentRepository.deleteByUserId(user.getId());
+        reviewRepository.deleteByUser(user);
+        favoriteRepository.deleteByUser(user);
+        cartRepository.deleteByUser(user);
 
         userRepository.delete(user);
 
