@@ -17,4 +17,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Double findAverageRatingByPhoneId(@Param("phoneId") Long phoneId);
 
     List<Review> findByPhoneOrderByCreatedAtDesc(Phone phone);
+
+    void deleteByUser(User user);
 }
