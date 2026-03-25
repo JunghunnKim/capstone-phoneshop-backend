@@ -30,6 +30,10 @@ public class CommentService {
             throw new IllegalArgumentException("phoneId는 필수입니다.");
         }
 
+        if (request.getContent() == null || request.getContent().isBlank()) {
+            throw new IllegalArgumentException("댓글 내용은 비워둘 수 없습니다.");
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("유저 없음"));
 
