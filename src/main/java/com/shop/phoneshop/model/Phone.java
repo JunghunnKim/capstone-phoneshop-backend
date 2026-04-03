@@ -38,6 +38,18 @@ public class Phone {
     @OneToMany(mappedBy = "phone", cascade = CascadeType.REMOVE)
     private List<Review> reviews = new ArrayList<>();
 
+    @OneToMany(mappedBy = "phone", cascade = CascadeType.REMOVE)
+    private List<CartItem> cartItems = new ArrayList<>();
+
+    @OneToMany(mappedBy = "phone", cascade = CascadeType.REMOVE)
+    private List<Favorite> favorites = new ArrayList<>();
+
+    @OneToMany(mappedBy = "phone", cascade = CascadeType.REMOVE)
+    private List<OrderItem> orderItems = new ArrayList<>();
+
+    @OneToMany(mappedBy = "phone", cascade = CascadeType.REMOVE)
+    private List<Order> orders = new ArrayList<>();
+
     public Phone(
             String name,
             String brand,
