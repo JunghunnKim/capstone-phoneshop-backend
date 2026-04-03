@@ -34,7 +34,11 @@ public class PhoneService {
             dir.mkdirs();
         }
 
-        String savedFilename = UUID.randomUUID() + "_" + image.getOriginalFilename();
+        String originalFilename = image.getOriginalFilename();
+        String extension = (originalFilename != null && originalFilename.contains("."))
+                ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                : "";
+        String savedFilename = UUID.randomUUID() + extension;
         File saveFile = new File(uploadDir + savedFilename);
         image.transferTo(saveFile);
 
