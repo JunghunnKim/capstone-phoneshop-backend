@@ -7,6 +7,7 @@ import com.shop.phoneshop.dto.CartResponse;
 import com.shop.phoneshop.model.*;
 import com.shop.phoneshop.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,9 @@ public class CartService {
     private final PhoneRepository phoneRepository;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
+
+    @Value("${app.base-url}")
+    private String baseUrl;
 
     /// +버튼 API
     @Transactional
@@ -90,7 +94,7 @@ public class CartService {
                 .orElseThrow(() -> new IllegalArgumentException("장바구니 없음"));
 
         List<CartItemResponse> items = cart.getCartItems().stream()
-                .map(CartItemResponse::from)
+                .map(cartItem -> CartItemResponse.from(cartItem, baseUrl))
                 .toList();
 
         int totalPrice = items.stream()

@@ -4,6 +4,7 @@ import com.shop.phoneshop.dto.PhoneCreateRequest;
 import com.shop.phoneshop.dto.PhoneDetailResponse;
 import com.shop.phoneshop.dto.PhoneResponse;
 import com.shop.phoneshop.model.Phone;
+import com.shop.phoneshop.repository.FavoriteRepository;
 import com.shop.phoneshop.repository.PhoneRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class PhoneService {
 
     private final PhoneRepository phoneRepository;
+    private final FavoriteRepository favoriteRepository;
 
     @Value("${app.base-url}")
     private String baseUrl;
@@ -69,6 +71,7 @@ public class PhoneService {
                         .brand(phone.getBrand())
                         .price(phone.getPrice())
                         .imageUrl(baseUrl + phone.getImageUrl())
+                        .favoriteCount(favoriteRepository.countByPhone(phone))
                         .build())
                 .toList();
     }

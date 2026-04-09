@@ -12,4 +12,5 @@ public class PhoneResponse {
     private String brand;
     private int price;
     private String imageUrl;
+    private long favoriteCount;
 }

@@ -15,13 +15,13 @@ public class CartItemResponse {
     private String imageUrl;
     private int quantity;
 
-    public static CartItemResponse from(CartItem cartItem) {
+    public static CartItemResponse from(CartItem cartItem, String baseUrl) {
         return CartItemResponse.builder()
                 .phoneId(cartItem.getPhone().getId())
                 .name(cartItem.getPhone().getName())
                 .brand(cartItem.getPhone().getBrand())
                 .price(cartItem.getPhone().getPrice())
-                .imageUrl(cartItem.getPhone().getImageUrl())
+                .imageUrl(baseUrl + cartItem.getPhone().getImageUrl())
                 .quantity(cartItem.getQuantity())
                 .build();
     }
